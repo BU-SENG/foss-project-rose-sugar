@@ -1,0 +1,36 @@
+# Root gitignore for monorepo
+
+# Node
+node_modules/
+my-app/node_modules/
+my-app/dist/
+my-app/.vite/
+
+# Python
+**/venv/
+backend/venv/
+.env
+*.pyc
+__pycache__/
+.pytest_cache/
+
+# Django
+backend/db.sqlite3
+backend/staticfiles/
+backend/media/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Misc
+coverage/
+coverage.xml
+reports/
