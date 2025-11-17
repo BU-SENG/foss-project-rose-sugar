@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Budgets from './pages/Budgets';
+import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -58,6 +59,10 @@ function AppLayout() {
                   <span>📋</span>
                   <p className="text-sm font-medium">Transactions</p>
                 </Link>
+                <Link to="/reports" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition ${location.pathname === '/reports' ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' : 'text-[#4b5563] dark:text-[#92b2c9] hover:bg-gray-100 dark:hover:bg-[#233948]'}`}>
+                  <span>📈</span>
+                  <p className="text-sm font-medium">Reports</p>
+                </Link>
                 <Link to="/budgets" className="flex items-center gap-3 px-3 py-2 text-[#4b5563] dark:text-[#92b2c9] hover:bg-gray-100 dark:hover:bg-[#233948] rounded-lg transition">
                   <span>💳</span>
                   <p className="text-sm font-medium">Budgets</p>
@@ -91,10 +96,11 @@ function AppLayout() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/transactions" element={<Transactions />} />
+            <Route path="/reports" element={<Reports />} />
             <Route path="/budgets" element={<Budgets />} />
+            <Route path="/add-expense" element={<AddExpense />} />
             <Route path="/settings" element={<Settings />} />
-              <Route path="/add-expense" element={<AddExpense />} />
-            </Routes>
+          </Routes>
           </main>
         </div>
       </div>

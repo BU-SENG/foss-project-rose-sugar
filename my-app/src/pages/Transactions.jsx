@@ -1,4 +1,9 @@
+import { useState, useMemo } from 'react';
+
 export default function Transactions() {
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('All Categories');
+
   const transactions = [
     { id: 1, date: '2024-11-17', name: 'Campus Cafeteria', category: 'Food', amount: -8.50, icon: '🍴' },
     { id: 2, date: '2024-11-17', name: 'Cinema Plex', category: 'Entertainment', amount: -15.00, icon: '🎭' },
@@ -7,6 +12,19 @@ export default function Transactions() {
     { id: 5, date: '2024-11-15', name: 'Grocery Store', category: 'Food', amount: -35.20, icon: '🛒' },
     { id: 6, date: '2024-11-14', name: 'University Tuition', category: 'Education', amount: -500.00, icon: '🎓' },
   ];
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return transactions.filter((t) => {
+      if (category !== 'All Categories' && t.category !== category) return false;
+      if (!q) return true;
+      return (
+        t.name.toLowerCase().includes(q) ||
+        t.category.toLowerCase().includes(q) ||
+        t.date.toLowerCase().includes(q)
+      );
+    });
+  }, [query, category]);
 
   return (
     <div className="p-8">
@@ -18,8 +36,18 @@ export default function Transactions() {
 
         {/* Filters */}
         <div className="flex gap-4 mb-6">
-          <input type="text" placeholder="Search transactions..." className="flex-1 px-4 py-2 rounded-lg bg-[#fdfdff] dark:bg-[#111b22] border border-gray-300 dark:border-gray-700 text-[#111827] dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <select className="px-4 py-2 rounded-lg bg-[#fdfdff] dark:bg-[#111b22] border border-gray-300 dark:border-gray-700 text-[#111827] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            type="text"
+            placeholder="Search transactions..."
+            className="flex-1 px-4 py-2 rounded-lg bg-[#fdfdff] dark:bg-[#111b22] border border-gray-300 dark:border-gray-700 text-[#111827] dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="px-4 py-2 rounded-lg bg-[#fdfdff] dark:bg-[#111b22] border border-gray-300 dark:border-gray-700 text-[#111827] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
             <option>All Categories</option>
             <option>Food</option>
             <option>Transport</option>
@@ -42,7 +70,7 @@ export default function Transactions() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {transactions.map((transaction) => (
+                {filtered.map((transaction) => (
                   <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-[#0d1117] transition">
                     <td className="px-6 py-4 text-sm text-[#6b7280] dark:text-[#92b2c9]">{transaction.date}</td>
                     <td className="px-6 py-4 text-sm">
