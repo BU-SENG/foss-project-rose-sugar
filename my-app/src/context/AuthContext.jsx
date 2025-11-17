@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 // Create the context
 const AuthContext = createContext();
@@ -7,6 +8,8 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Check if user is already logged in (from localStorage or session)
   useEffect(() => {
@@ -74,6 +77,11 @@ export function AuthProvider({ children }) {
     localStorage.setItem('user', JSON.stringify(userData));
     if (token) localStorage.setItem('auth_token', token);
     if (refreshToken) localStorage.setItem('auth_refresh', refreshToken);
+    
+    // Redirect from login/register to dashboard if user logs in
+    if (location.pathname === '/login' || location.pathname === '/register') {
+      navigate('/', { replace: true });
+    }
   };
 
   const logout = async () => {
@@ -85,7 +93,7 @@ export function AuthProvider({ children }) {
     
     // Optional: Notify backend of logout
     try {
-      await fetch(`${import.meta.env.VITE_API_URL}/auth/logout/`, {
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/auth/logout/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
@@ -95,6 +103,9 @@ export function AuthProvider({ children }) {
     } catch (err) {
       console.error('Error notifying backend of logout:', err);
     }
+    
+    // Redirect to login after logout
+    navigate('/login', { replace: true });
   };
 
   const value = {
