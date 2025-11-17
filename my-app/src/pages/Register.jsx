@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { authAPI } from '../services/api';
 
 export default function Register() {
   const [fullName, setFullName] = useState('');
@@ -8,16 +10,58 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
+    setError('');
+
     if (password !== confirmPassword) {
-      alert('Passwords do not match!');
+      setError('Passwords do not match!');
       return;
     }
-    // TODO: Add registration logic here
-    navigate('/login');
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await authAPI.register({
+        email,
+        password,
+        first_name: fullName.split(' ')[0] || 'User',
+        last_name: fullName.split(' ').slice(1).join(' ') || '',
+      });
+
+      if (response.success) {
+        const userData = {
+          email: response.data.user?.email || email,
+          id: response.data.user?.id,
+          name: fullName,
+        };
+
+        login(
+          userData,
+          response.data.access,
+          response.data.refresh
+        );
+
+        navigate('/');
+      } else {
+        setError(response.error || 'Registration failed. Please try again.');
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred. Please try again.');
+      console.error('Registration error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleSignUp = () => {
@@ -126,6 +170,14 @@ export default function Register() {
                   </button>
                 </div>
 
+                {/* Error Alert */}
+                {error && (
+                  <div className="flex w-full items-center gap-3 rounded-lg bg-red-50 dark:bg-red-500/20 border border-red-200 dark:border-red-500/50 p-4 mb-4">
+                    <span className="text-red-600 dark:text-red-400 text-lg">⚠️</span>
+                    <p className="text-red-700 dark:text-red-300 text-sm font-medium">{error}</p>
+                  </div>
+                )}
+
                 {/* Registration Form */}
                 <form onSubmit={handleRegister} className="flex flex-col gap-4">
                   {/* Full Name */}
@@ -201,9 +253,10 @@ export default function Register() {
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    className="mt-4 flex min-w-[84px] max-w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] transition-colors hover:bg-primary/90"
+                    disabled={loading}
+                    className="mt-4 flex min-w-[84px] max-w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className="truncate">Create My Free Account</span>
+                    <span className="truncate">{loading ? 'Creating Account...' : 'Create My Free Account'}</span>
                   </button>
                 </form>
 

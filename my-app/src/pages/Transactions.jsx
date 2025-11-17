@@ -1,10 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { transactionsAPI } from '../services/api';
 
 export default function Transactions() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All Categories');
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const transactions = [
+  // Mock data fallback
+  const defaultTransactions = [
     { id: 1, date: '2024-11-17', name: 'Campus Cafeteria', category: 'Food', amount: -8.50, icon: '🍴' },
     { id: 2, date: '2024-11-17', name: 'Cinema Plex', category: 'Entertainment', amount: -15.00, icon: '🎭' },
     { id: 3, date: '2024-11-16', name: 'Metro Pass', category: 'Transport', amount: -2.75, icon: '🚇' },
@@ -12,6 +17,30 @@ export default function Transactions() {
     { id: 5, date: '2024-11-15', name: 'Grocery Store', category: 'Food', amount: -35.20, icon: '🛒' },
     { id: 6, date: '2024-11-14', name: 'University Tuition', category: 'Education', amount: -500.00, icon: '🎓' },
   ];
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        setLoading(true);
+        const result = await transactionsAPI.getAll();
+        if (result.success) {
+          setTransactions(result.data);
+          setError(null);
+        } else {
+          setError('Failed to load transactions');
+          setTransactions(defaultTransactions);
+        }
+      } catch (err) {
+        console.error('Error fetching transactions:', err);
+        setError('Error loading transactions');
+        setTransactions(defaultTransactions);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

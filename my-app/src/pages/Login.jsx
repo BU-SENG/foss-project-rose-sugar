@@ -1,16 +1,48 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { authAPI } from '../services/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // TODO: Add authentication logic here
-    navigate('/');
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await authAPI.login({ email, password });
+      
+      if (response.success) {
+        const userData = {
+          email: response.data.user?.email || email,
+          id: response.data.user?.id,
+          name: response.data.user?.name,
+        };
+        
+        login(
+          userData,
+          response.data.access,
+          response.data.refresh
+        );
+        
+        navigate('/');
+      } else {
+        setError(response.error || 'Login failed. Please try again.');
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred. Please try again.');
+      console.error('Login error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -48,6 +80,14 @@ export default function Login() {
                     <h1 className="text-gray-900 dark:text-white text-3xl font-bold leading-tight">Welcome Back</h1>
                     <p className="text-gray-600 dark:text-gray-300 text-base font-normal">Smart budgeting starts here.</p>
                   </div>
+
+                  {/* Error Alert */}
+                  {error && (
+                    <div className="flex w-full items-center gap-3 rounded-lg bg-red-50 dark:bg-red-500/20 border border-red-200 dark:border-red-500/50 p-4">
+                      <span className="text-red-600 dark:text-red-400 text-lg">⚠️</span>
+                      <p className="text-red-700 dark:text-red-300 text-sm font-medium">{error}</p>
+                    </div>
+                  )}
 
                   {/* Form */}
                   <form onSubmit={handleLogin} className="flex w-full flex-col items-stretch gap-4">
@@ -98,9 +138,10 @@ export default function Login() {
                     {/* Login Button */}
                     <button
                       type="submit"
-                      className="flex items-center justify-center rounded-lg h-14 px-6 text-base font-bold text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background-light dark:focus:ring-offset-background-dark w-full transition"
+                      disabled={loading}
+                      className="flex items-center justify-center rounded-lg h-14 px-6 text-base font-bold text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background-light dark:focus:ring-offset-background-dark w-full transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Log In
+                      {loading ? 'Logging in...' : 'Log In'}
                     </button>
                   </form>
 

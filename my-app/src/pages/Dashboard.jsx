@@ -1,14 +1,50 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { dashboardAPI } from '../services/api';
 
 export default function Dashboard() {
-    const navigate = useNavigate();
-  const transactions = [
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
+
+  // Mock data fallback
+  const defaultTransactions = [
     { id: 1, name: 'Campus Cafeteria', category: 'Food', amount: -8.50, icon: '🍴' },
     { id: 2, name: 'Cinema Plex', category: 'Entertainment', amount: -15.00, icon: '🎭' },
     { id: 3, name: 'Metro Pass', category: 'Transport', amount: -2.75, icon: '🚇' },
     { id: 4, name: 'Bookstore', category: 'Supplies', amount: -42.30, icon: '🛍️' },
   ];
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const overview = await dashboardAPI.getOverview();
+        if (overview.success) {
+          setDashboardData(overview.data);
+          setError(null);
+        } else {
+          setError('Failed to load dashboard data');
+          setDashboardData(null);
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard:', err);
+        setError('Error loading dashboard');
+        setDashboardData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const transactions = dashboardData?.recentTransactions || defaultTransactions;
+  const budgetSpent = dashboardData?.budgetSpent || 1300;
+  const budgetLimit = dashboardData?.budgetLimit || 2000;
+  const budgetPercentage = dashboardData?.budgetPercentage || 65;
+  const totalSpent = dashboardData?.totalSpent || 1300;
 
   return (
     <div className="p-8 overflow-y-auto">
@@ -33,14 +69,14 @@ export default function Dashboard() {
             <div className="bg-[#fdfdff] dark:bg-[#111b22] rounded-xl p-6 shadow-sm">
               <div className="flex gap-6 justify-between items-center">
                 <p className="text-[#111827] dark:text-white text-lg font-bold">Monthly Budget</p>
-                <p className="text-[#111827] dark:text-white text-lg font-bold">$1300 / $2000</p>
+                <p className="text-[#111827] dark:text-white text-lg font-bold">${budgetSpent} / ${budgetLimit}</p>
               </div>
               <div className="mt-4">
                 <div className="w-full bg-[#e5e7eb] dark:bg-[#325167] rounded-full h-2.5">
-                  <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: '65%' }}></div>
+                  <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: `${budgetPercentage}%` }}></div>
                 </div>
               </div>
-              <p className="text-[#6b7280] dark:text-[#92b2c9] text-sm mt-2">$700 remaining</p>
+              <p className="text-[#6b7280] dark:text-[#92b2c9] text-sm mt-2">${(budgetLimit - budgetSpent).toLocaleString()} remaining</p>
             </div>
 
             {/* Charts Grid */}
@@ -50,7 +86,7 @@ export default function Dashboard() {
                 <div className="flex flex-col gap-4 h-full">
                   <div>
                     <p className="text-[#111827] dark:text-white text-base font-medium">Spending Breakdown</p>
-                    <p className="text-[#111827] dark:text-white text-3xl font-bold">$1,300</p>
+                    <p className="text-[#111827] dark:text-white text-3xl font-bold">${totalSpent.toLocaleString()}</p>
                     <div className="flex gap-1 mt-2">
                       <p className="text-[#6b7280] dark:text-[#92b2c9] text-sm">This Month</p>
                       <p className="text-green-500 text-sm font-medium">⬆️ 5%</p>
