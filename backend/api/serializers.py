@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
+from .models import Transaction, Budget
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -63,3 +64,41 @@ class AuthResponseSerializer(serializers.Serializer):
     access = serializers.CharField()
     refresh = serializers.CharField()
     user = UserSerializer()
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = ['id', 'user', 'type', 'category', 'amount', 'description', 'date', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+
+    def validate(self, data):
+        """Ensure category is provided for expenses"""
+        if data.get('type') == 'expense' and not data.get('category'):
+            raise serializers.ValidationError({"category": "Category is required for expenses."})
+        return data
+
+
+class BudgetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Budget
+        fields = ['id', 'user', 'category', 'limit_amount', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+
+
+class DashboardOverviewSerializer(serializers.Serializer):
+    """Dashboard overview with spending summary"""
+    total_expenses = serializers.DecimalField(max_digits=10, decimal_places=2)
+    total_income = serializers.DecimalField(max_digits=10, decimal_places=2)
+    net_balance = serializers.DecimalField(max_digits=10, decimal_places=2)
+    this_month_spending = serializers.DecimalField(max_digits=10, decimal_places=2)
+    budget_progress = serializers.ListField()  # List of category budgets with spending
+
+
+class SpendingBreakdownSerializer(serializers.Serializer):
+    """Spending breakdown by category"""
+    category = serializers.CharField()
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2)
+    percentage = serializers.FloatField()
+    budget_limit = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
+

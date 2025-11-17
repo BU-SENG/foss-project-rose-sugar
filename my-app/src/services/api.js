@@ -68,10 +68,11 @@ async function apiCall(endpoint, options = {}) {
 // Dashboard API calls
 export const dashboardAPI = {
   getOverview: () => apiCall('/dashboard/overview/'),
-  getSpendingBreakdown: () => apiCall('/dashboard/spending-breakdown/'),
-  getSpendingTrend: () => apiCall('/dashboard/spending-trend/'),
-  getSuggestions: () => apiCall('/dashboard/suggestions/'),
-  getRecentTransactions: () => apiCall('/dashboard/recent-transactions/'),
+  getSpendingBreakdown: () => apiCall('/dashboard/spending_breakdown/'),
+  getSpendingTrend: () => apiCall('/dashboard/spending_trend/'),
+  getRecentTransactions: (params = {}) => apiCall('/dashboard/recent_transactions/', {
+    method: 'GET',
+  }),
 };
 
 // Transactions API calls
@@ -104,6 +105,7 @@ export const budgetsAPI = {
     body: JSON.stringify(budgetData),
   }),
   delete: (id) => apiCall(`/budgets/${id}/`, { method: 'DELETE' }),
+  spending_vs_budget: () => apiCall('/budgets/spending_vs_budget/'),
 };
 
 // Expenses API calls
@@ -115,12 +117,12 @@ export const expensesAPI = {
   getCategories: () => apiCall('/expenses/categories/'),
 };
 
-// Reports API calls
+// Reports API calls (using Dashboard endpoints for financial reports)
 export const reportsAPI = {
-  getOverview: (period = '30days') => apiCall(`/reports/overview/?period=${period}`),
-  getSpendingOverTime: (period = '30days') => apiCall(`/reports/spending-over-time/?period=${period}`),
-  getInsights: () => apiCall('/reports/insights/'),
-  getRecentTransactions: (limit = 5) => apiCall(`/reports/transactions/?limit=${limit}`),
+  getOverview: () => dashboardAPI.getOverview(),
+  getSpendingBreakdown: () => dashboardAPI.getSpendingBreakdown(),
+  getSpendingTrend: () => dashboardAPI.getSpendingTrend(),
+  getRecentTransactions: (limit = 10) => apiCall(`/dashboard/recent_transactions/?limit=${limit}`),
 };
 
 // Auth API calls (Django JWT or Session auth)
