@@ -316,7 +316,9 @@ npm run build
 
 ## 📄 License
 
-This project is part of an academic course and follows the repository's license terms.
+This project is licensed under the **MIT License** — see the [LICENSE](./LICENSE) file for details.
+
+You are free to use, modify, and distribute this software for personal and commercial purposes.
 
 ## 👥 Contributors
 
