@@ -7,6 +7,7 @@ import Budgets from './pages/Budgets';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import AddExpense from './pages/AddExpense';
+import AddIncome from './pages/AddIncome';
 
 export default function AppLayout() {
   const { user, logout } = useAuth();
@@ -55,8 +56,12 @@ export default function AppLayout() {
                   <p className="text-sm font-medium">Budgets</p>
                 </Link>
                 <Link to="/add-expense" className="flex items-center gap-3 px-3 py-2 text-[#4b5563] dark:text-[#92b2c9] hover:bg-gray-100 dark:hover:bg-[#233948] rounded-lg transition">
-                  <span>💳</span>
+                  <span>💸</span>
                   <p className="text-sm font-medium">Add Expense</p>
+                </Link>
+                <Link to="/add-income" className="flex items-center gap-3 px-3 py-2 text-[#4b5563] dark:text-[#92b2c9] hover:bg-gray-100 dark:hover:bg-[#233948] rounded-lg transition">
+                  <span>💰</span>
+                  <p className="text-sm font-medium">Log Income</p>
                 </Link>
                 <Link to="/settings" className="flex items-center gap-3 px-3 py-2 text-[#4b5563] dark:text-[#92b2c9] hover:bg-gray-100 dark:hover:bg-[#233948] rounded-lg transition">
                   <span>⚙️</span>
@@ -70,6 +75,9 @@ export default function AppLayout() {
           <div className="flex flex-col gap-1">
             <Link to="/add-expense" className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition mb-2">
               <span className="truncate">➕ Log Expense</span>
+            </Link>
+            <Link to="/add-income" className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-green-500 text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-green-600 transition mb-2">
+              <span className="truncate">💰 Log Income</span>
             </Link>
             <button
               onClick={logout}
@@ -89,6 +97,7 @@ export default function AppLayout() {
             <Route path="/reports" element={<Reports />} />
             <Route path="/budgets" element={<Budgets />} />
             <Route path="/add-expense" element={<AddExpense />} />
+            <Route path="/add-income" element={<AddIncome />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>

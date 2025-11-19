@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { transactionsAPI } from '../services/api';
+import { transactionsAPI, budgetsAPI } from '../services/api';
 import { formatCurrency, getCurrency } from '../utils/currency';
 
 export default function Transactions() {
@@ -7,6 +7,7 @@ export default function Transactions() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All Categories');
   const [transactions, setTransactions] = useState([]);
+  const [budgetCategories, setBudgetCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -18,6 +19,15 @@ export default function Transactions() {
     'education': 'Education',
     'health': 'Health & Medical',
     'shopping': 'Shopping',
+    'salary': 'Salary',
+    'freelance': 'Freelance',
+    'scholarship': 'Scholarship',
+    'part-time job': 'Part-time Job',
+    'internship': 'Internship',
+    'bonus': 'Bonus',
+    'investment': 'Investment',
+    'gift': 'Gift',
+    'allowance': 'Allowance',
     'other': 'Other',
   };
 
@@ -53,9 +63,18 @@ export default function Transactions() {
   }, []);
 
   useEffect(() => {
-    const fetchTransactions = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
+        
+        // Fetch budget categories
+        const budgetResult = await budgetsAPI.getAll();
+        if (budgetResult.success && Array.isArray(budgetResult.data)) {
+          const categories = budgetResult.data.map(b => b.category);
+          setBudgetCategories(categories);
+        }
+
+        // Fetch transactions
         const result = await transactionsAPI.getAll();
         console.log('Transactions API result:', result);
         
@@ -75,7 +94,7 @@ export default function Transactions() {
       }
     };
 
-    fetchTransactions();
+    fetchData();
   }, []);
 
   const filtered = useMemo(() => {
@@ -97,7 +116,19 @@ export default function Transactions() {
     });
   }, [query, category, transactions]);
 
-  const categoryOptions = ['All Categories', ...Object.values(CATEGORY_CHOICES)];
+  // Build category options from budget categories
+  const categoryOptions = useMemo(() => {
+    const options = ['All Categories'];
+    if (budgetCategories.length > 0) {
+      budgetCategories.forEach(cat => {
+        const displayName = CATEGORY_CHOICES[cat] || cat;
+        if (!options.includes(displayName)) {
+          options.push(displayName);
+        }
+      });
+    }
+    return options;
+  }, [budgetCategories]);
 
   return (
     <div className="p-8">

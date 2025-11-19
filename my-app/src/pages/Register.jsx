@@ -153,32 +153,7 @@ export default function Register() {
                   </div>
 
                   {/* Google Sign Up */}
-                  <div className="mb-6 flex flex-col gap-3 sm:flex-row">
-                    <button
-                      onClick={handleGoogleSignUp}
-                      className="flex w-full min-w-[84px] items-center justify-center gap-2 overflow-hidden rounded-lg h-12 px-5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-white text-sm font-bold leading-normal tracking-[0.015em] transition-colors hover:bg-slate-50 dark:hover:bg-slate-700"
-                    >
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                          d="M22.5777 12.2541C22.5777 11.4541 22.5077 10.6641 22.3677 9.89409H12.0077V14.3341H18.0477C17.7677 15.9341 16.9277 17.2941 15.6077 18.2341V20.9441H19.4677C21.4977 19.0941 22.5777 16.0341 22.5777 12.2541Z"
-                          fill="#4285F4"
-                        ></path>
-                        <path
-                          d="M12.0077 23.0002C15.1177 23.0002 17.7277 21.9302 19.4677 20.9402L15.6077 18.2302C14.5777 18.9102 13.3877 19.3102 12.0077 19.3102C9.37774 19.3102 7.14774 17.6202 6.33774 15.2902H2.36774V18.0902C4.18774 21.0502 7.79774 23.0002 12.0077 23.0002Z"
-                          fill="#34A853"
-                        ></path>
-                        <path
-                          d="M6.33774 15.2899C6.08774 14.5699 5.94774 13.7999 5.94774 12.9999C5.94774 12.1999 6.08774 11.4299 6.33774 10.7099V7.90991H2.36774C1.51774 9.59991 1.00774 11.2399 1.00774 12.9999C1.00774 14.7599 1.51774 16.3999 2.36774 18.0899L6.33774 15.2899Z"
-                          fill="#FBBC05"
-                        ></path>
-                        <path
-                          d="M12.0077 6.68018C13.5177 6.68018 14.9377 7.21018 16.0377 8.24018L19.5377 4.93018C17.7177 3.23018 15.1177 2.00018 12.0077 2.00018C7.79774 2.00018 4.18774 3.95018 2.36774 6.91018L6.33774 9.71018C7.14774 7.38018 9.37774 5.69018 12.0077 5.69018V6.68018Z"
-                          fill="#EA4335"
-                        ></path>
-                      </svg>
-                      <span className="truncate">Sign up with Google</span>
-                    </button>
-                  </div>
+                  
 
                   {/* Error Alert */}
                   {error && (
