@@ -1,5 +1,3 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/tfYzIujW)
-
 # Student Budget Tracker
 
 A full-stack student budgeting application with a React frontend and Django backend, designed to help students manage expenses, track budgets, and gain financial insights.
@@ -321,12 +319,24 @@ This project is licensed under the **MIT License** — see the [LICENSE](./LICEN
 You are free to use, modify, and distribute this software for personal and commercial purposes.
 
 ## 👥 Contributors
+Agu joshua 22/0210
+Acho ihim chidera 22/0233
+Umaru victor 23/0246
+Vincent oluchukwu destiny 22/0188
+Adedeji vindication 22/0223
+Adejare ayooluwa 22/0040
+Adejumo ridwan 22/0171
+Adeleke olamiposi 22/3103
+Adeyemi john 22/0056
+Aghoa emmanuel 22/0255
 
 - **Frontend**: React, Vite, Tailwind CSS
 - **Backend**: Django, Django REST Framework, SimpleJWT
 - **Design**: Dark mode UI/UX, responsive layouts
 
 ---
+
+
 
 **Happy coding! 🚀 Feel free to contribute and make this project better.**
 
