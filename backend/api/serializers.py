@@ -73,9 +73,9 @@ class TransactionSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 
     def validate(self, data):
-        """Ensure category is provided for expenses"""
-        if data.get('type') == 'expense' and not data.get('category'):
-            raise serializers.ValidationError({"category": "Category is required for expenses."})
+        """Ensure category is provided for both income and expenses"""
+        if not data.get('category'):
+            raise serializers.ValidationError({"category": "Category is required for all transactions."})
         return data
 
 

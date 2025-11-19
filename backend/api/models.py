@@ -42,14 +42,39 @@ class Transaction(models.Model):
         ('income', 'Income'),
     ]
 
+    EXPENSE_CATEGORIES = [
+        ('food', 'Food & Groceries'),
+        ('transport', 'Transport'),
+        ('entertainment', 'Entertainment'),
+        ('utilities', 'Utilities'),
+        ('education', 'Education'),
+        ('health', 'Health & Medical'),
+        ('shopping', 'Shopping'),
+        ('other', 'Other'),
+    ]
+
+    INCOME_CATEGORIES = [
+        ('salary', 'Salary'),
+        ('freelance', 'Freelance'),
+        ('scholarship', 'Scholarship'),
+        ('part-time job', 'Part-time Job'),
+        ('internship', 'Internship'),
+        ('bonus', 'Bonus'),
+        ('investment', 'Investment'),
+        ('gift', 'Gift'),
+        ('allowance', 'Allowance'),
+    ]
+
+    ALL_CATEGORIES = EXPENSE_CATEGORIES + INCOME_CATEGORIES
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transactions')
     type = models.CharField(max_length=10, choices=TRANSACTION_TYPE_CHOICES)
     category = models.CharField(
         max_length=50,
-        choices=Budget.CATEGORY_CHOICES,
+        choices=ALL_CATEGORIES,
         null=True,
         blank=True,
-        help_text='Only required for expenses'
+        help_text='Required for both income and expenses'
     )
     amount = models.DecimalField(
         max_digits=10,
