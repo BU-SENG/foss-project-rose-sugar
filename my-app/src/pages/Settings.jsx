@@ -1,159 +1,222 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { getCurrency, setCurrency as saveCurrency, CURRENCY_OPTIONS } from '../utils/currency';
+import { useState, useEffect } from "react";
+import { CheckCircle, AlertCircle, Save, Trash2, Loader } from "lucide-react";
 
 export default function Settings() {
-  const { user } = useAuth();
-  const [email, setEmail] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [currency, setCurrency] = useState('USD');
-  const [theme, setTheme] = useState('dark');
-  const [budgetNotifications, setBudgetNotifications] = useState(true);
-  const [weeklyReports, setWeeklyReports] = useState(true);
-  const [transactionUpdates, setTransactionUpdates] = useState(false);
+  const [email, setEmail] = useState("alex@example.com");
+  const [firstName, setFirstName] = useState("Alex");
+  const [lastName, setLastName] = useState("Johnson");
+  const [currency, setCurrency] = useState("USD");
   const [loading, setLoading] = useState(false);
-  const [saveMessage, setSaveMessage] = useState('');
+  const [saveMessage, setSaveMessage] = useState("");
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (user) {
-      setEmail(user.email || '');
-      setFirstName(user.first_name || '');
-      setLastName(user.last_name || '');
-    }
-    // Load saved currency from localStorage
-    setCurrency(getCurrency());
-  }, [user]);
+  const CURRENCY_OPTIONS = {
+    USD: { symbol: "$", name: "US Dollar" },
+    EUR: { symbol: "€", name: "Euro" },
+    GBP: { symbol: "£", name: "British Pound" },
+    CAD: { symbol: "C$", name: "Canadian Dollar" },
+    NGN: { symbol: "₦", name: "Nigerian Naira" },
+  };
 
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setSaveMessage('');
+    setSaveMessage("");
     setError(null);
 
     try {
-      // Save currency preference to localStorage
-      saveCurrency(currency);
-      
-      // In a real app, this would call an API endpoint to save user preferences
-      // For now, we'll just show a success message after a delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setSaveMessage('Settings saved successfully!');
-      setTimeout(() => setSaveMessage(''), 3000);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setSaveMessage("Settings saved successfully!");
+      setTimeout(() => setSaveMessage(""), 3000);
     } catch (err) {
-      setError('Failed to save settings');
+      setError("Failed to save settings");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteAccount = () => {
-    if (confirm('Are you sure? This action cannot be undone. All your data will be deleted.')) {
-      // In a real app, this would call an API endpoint to delete the account
-      console.log('Account deletion requested');
+    if (
+      confirm(
+        "Are you sure? This action cannot be undone. All your data will be deleted permanently."
+      )
+    ) {
+      console.log("Account deletion requested");
     }
   };
 
   return (
-    <div className="p-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-black text-[#111827] dark:text-white mb-2">Settings</h1>
-          <p className="text-[#6b7280] dark:text-[#92b2c9]">Manage your account preferences</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 md:p-8 overflow-y-auto">
+      <div className="max-w-3xl mx-auto">
+        {/* Header */}
+        <div className="mb-12">
+          <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
+            Settings
+          </h1>
+          <p className="text-slate-400">Manage your account and preferences</p>
         </div>
 
-        {error && (
-          <div className="mb-6 bg-red-50 dark:bg-red-500/20 rounded-xl p-4 border border-red-200 dark:border-red-500/50">
-            <p className="text-red-700 dark:text-red-300">⚠️ {error}</p>
-          </div>
-        )}
-
+        {/* Success Alert */}
         {saveMessage && (
-          <div className="mb-6 bg-green-50 dark:bg-green-500/20 rounded-xl p-4 border border-green-200 dark:border-green-500/50">
-            <p className="text-green-700 dark:text-green-300">✅ {saveMessage}</p>
+          <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 backdrop-blur-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+            <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+            <p className="text-emerald-300 text-sm font-medium">
+              {saveMessage}
+            </p>
           </div>
         )}
 
-        {/* Account Settings */}
-        <div className="bg-[#fdfdff] dark:bg-[#111b22] rounded-xl p-6 shadow-sm mb-6">
-          <h2 className="text-lg font-bold text-[#111827] dark:text-white mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">Account Settings</h2>
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 backdrop-blur-sm flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <p className="text-red-300 text-sm font-medium">{error}</p>
+          </div>
+        )}
 
-          <div className="space-y-6">
-            {/* First Name */}
-            <div>
-              <label className="block text-sm font-medium text-[#111827] dark:text-white mb-2">First Name</label>
-              <input
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-[#0d1117] border border-gray-300 dark:border-gray-700 text-[#111827] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+        {/* Account Settings Card */}
+        <div className="relative p-8 rounded-2xl bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-slate-700/50 backdrop-blur-xl overflow-hidden mb-6">
+          <div className="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-8 pb-6 border-b border-slate-700/50">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                <span className="text-xl">👤</span>
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-white">
+                  Account Settings
+                </h2>
+                <p className="text-slate-400 text-sm">
+                  Update your personal information
+                </p>
+              </div>
             </div>
 
-            {/* Last Name */}
-            <div>
-              <label className="block text-sm font-medium text-[#111827] dark:text-white mb-2">Last Name</label>
-              <input
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-[#0d1117] border border-gray-300 dark:border-gray-700 text-[#111827] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              {/* First Name */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-200">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-700/30 border border-slate-600/50 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 hover:border-slate-500/70"
+                  placeholder="Enter your first name"
+                />
+              </div>
+
+              {/* Last Name */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-200">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-700/30 border border-slate-600/50 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 hover:border-slate-500/70"
+                  placeholder="Enter your last name"
+                />
+              </div>
             </div>
 
             {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-[#111827] dark:text-white mb-2">Email Address</label>
+            <div className="space-y-2 mb-6">
+              <label className="block text-sm font-semibold text-slate-200">
+                Email Address
+              </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-[#0d1117] border border-gray-300 dark:border-gray-700 text-[#111827] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-slate-700/30 border border-slate-600/50 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 hover:border-slate-500/70"
+                placeholder="Enter your email address"
               />
             </div>
 
             {/* Currency */}
-            <div>
-              <label className="block text-sm font-medium text-[#111827] dark:text-white mb-2">Currency</label>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-slate-200">
+                Currency
+              </label>
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-[#0d1117] border border-gray-300 dark:border-gray-700 text-[#111827] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 rounded-xl bg-slate-700/30 border border-slate-600/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 hover:border-slate-500/70 appearance-none"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23a8b2c1' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`,
+                  backgroundPosition: "right 0.75rem center",
+                  backgroundRepeat: "no-repeat",
+                  backgroundSize: "1.5em 1.5em",
+                  paddingRight: "2.5rem",
+                }}
               >
-                <option value="USD">{CURRENCY_OPTIONS.USD.symbol} USD - {CURRENCY_OPTIONS.USD.name}</option>
-                <option value="EUR">{CURRENCY_OPTIONS.EUR.symbol} EUR - {CURRENCY_OPTIONS.EUR.name}</option>
-                <option value="GBP">{CURRENCY_OPTIONS.GBP.symbol} GBP - {CURRENCY_OPTIONS.GBP.name}</option>
-                <option value="CAD">{CURRENCY_OPTIONS.CAD.symbol} CAD - {CURRENCY_OPTIONS.CAD.name}</option>
-                <option value="NGN">{CURRENCY_OPTIONS.NGN.symbol} NGN - {CURRENCY_OPTIONS.NGN.name}</option>
+                {Object.entries(CURRENCY_OPTIONS).map(
+                  ([code, { symbol, name }]) => (
+                    <option key={code} value={code} className="bg-slate-800">
+                      {symbol} {code} - {name}
+                    </option>
+                  )
+                )}
               </select>
             </div>
-
-            
           </div>
         </div>
 
-        {/* Danger Zone */}
-        <div className="bg-red-50 dark:bg-red-500/10 rounded-xl p-6 shadow-sm mb-8">
-          <h2 className="text-lg font-bold text-red-600 dark:text-red-400 mb-4">Danger Zone</h2>
-          <p className="text-sm text-[#6b7280] dark:text-[#92b2c9] mb-4">Irreversible actions</p>
-          <button 
-            onClick={handleDeleteAccount}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
-          >
-            Delete Account
-          </button>
+        {/* Danger Zone Card */}
+        <div className="relative p-8 rounded-2xl bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/30 backdrop-blur-xl overflow-hidden">
+          <div className="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-red-500/20 to-red-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div className="relative z-10">
+            <div className="flex items-start gap-3 mb-6 pb-6 border-b border-red-500/20">
+              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="w-6 h-6 text-red-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-red-300">Danger Zone</h2>
+                <p className="text-red-300/70 text-sm">
+                  Irreversible actions - proceed with caution
+                </p>
+              </div>
+            </div>
+
+            <p className="text-red-200/70 text-sm mb-6">
+              Deleting your account will permanently remove all your data,
+              including transactions, budgets, and settings. This action cannot
+              be undone.
+            </p>
+
+            <button
+              onClick={handleDeleteAccount}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-red-500/20 border border-red-500/50 text-red-300 font-semibold hover:bg-red-500/30 hover:border-red-500/70 transition-all duration-200"
+            >
+              <Trash2 className="w-5 h-5" />
+              Delete Account
+            </button>
+          </div>
         </div>
 
-        {/* Save Button */}
-        <div className="flex gap-4">
-          <button 
+        {/* Action Buttons */}
+        <div className="mt-8 flex gap-4">
+          <button
             onClick={handleSaveSettings}
             disabled={loading}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Saving...' : 'Save Changes'}
+            {loading ? (
+              <>
+                <Loader className="w-5 h-5 animate-spin" />
+                <span>Saving...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-5 h-5" />
+                <span>Save Changes</span>
+              </>
+            )}
           </button>
         </div>
       </div>
