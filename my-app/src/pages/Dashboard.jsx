@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { TrendingUp, TrendingDown, Plus } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [currentMonth] = useState(2850.5);
   const [totalIncome] = useState(5200.0);
   const [totalExpenses] = useState(3450.0);
@@ -93,7 +95,7 @@ export default function Dashboard() {
               Welcome back
             </p>
             <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              Hey, Alex! 👋
+              Hey, {user?.username || "User"}! 👋
             </h1>
             <p className="text-slate-400 text-base mt-2">
               Here's your financial snapshot for this month
