@@ -1,311 +1,417 @@
-import React, { useState, useEffect } from 'react';
-import { reportsAPI } from '../services/api';
-import { formatCurrency, getCurrency } from '../utils/currency';
+import { useState } from "react";
+import { BarChart3, TrendingUp, PieChart, AlertCircle } from "lucide-react";
 
 export default function Reports() {
-  const [currency, setCurrency] = useState(getCurrency());
-  const [overview, setOverview] = useState(null);
-  const [spendingBreakdown, setSpendingBreakdown] = useState([]);
-  const [spendingTrend, setSpendingTrend] = useState([]);
-  const [recentTransactions, setRecentTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [period, setPeriod] = useState('30days');
+  const [period, setPeriod] = useState("30days");
+
+  const formatCurrency = (amount) => `$${parseFloat(amount).toFixed(2)}`;
 
   const CATEGORY_CHOICES = {
-    'food': 'Food & Groceries',
-    'transport': 'Transport',
-    'entertainment': 'Entertainment',
-    'utilities': 'Utilities',
-    'education': 'Education',
-    'health': 'Health & Medical',
-    'shopping': 'Shopping',
-    'other': 'Other',
+    food: "Food & Groceries",
+    transport: "Transport",
+    entertainment: "Entertainment",
+    utilities: "Utilities",
+    education: "Education",
+    health: "Health & Medical",
+    shopping: "Shopping",
+    other: "Other",
   };
+
+  // Mock data
+  const overview = {
+    this_month_spending: 2850.5,
+    total_income: 5200.0,
+    net_balance: 1750.0,
+  };
+
+  const spendingBreakdown = [
+    { category: "food", amount: 680.5, percentage: 23.8 },
+    { category: "shopping", amount: 520.0, percentage: 18.2 },
+    { category: "entertainment", amount: 450.75, percentage: 15.8 },
+    { category: "utilities", amount: 380.0, percentage: 13.3 },
+    { category: "transport", amount: 350.0, percentage: 12.3 },
+    { category: "health", amount: 250.0, percentage: 8.8 },
+    { category: "education", amount: 150.0, percentage: 5.3 },
+    { category: "other", amount: 68.25, percentage: 2.4 },
+  ];
+
+  const spendingTrend = Array.from({ length: 30 }, (_, i) => ({
+    date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString(),
+    amount: (Math.random() * 150 + 80).toFixed(2),
+  }));
+
+  const recentTransactions = [
+    {
+      id: 1,
+      date: "2024-01-15",
+      description: "Whole Foods Market",
+      category: "food",
+      amount: 85.5,
+    },
+    {
+      id: 2,
+      date: "2024-01-14",
+      description: "Salary Deposit",
+      category: "other",
+      amount: 2500.0,
+    },
+    {
+      id: 3,
+      date: "2024-01-13",
+      description: "AMC Theaters",
+      category: "entertainment",
+      amount: 32.0,
+    },
+    {
+      id: 4,
+      date: "2024-01-12",
+      description: "Shell Gas Station",
+      category: "transport",
+      amount: 45.2,
+    },
+    {
+      id: 5,
+      date: "2024-01-11",
+      description: "Amazon",
+      category: "shopping",
+      amount: 125.75,
+    },
+    {
+      id: 6,
+      date: "2024-01-10",
+      description: "Spotify Premium",
+      category: "entertainment",
+      amount: 14.99,
+    },
+    {
+      id: 7,
+      date: "2024-01-09",
+      description: "CVS Pharmacy",
+      category: "health",
+      amount: 28.5,
+    },
+    {
+      id: 8,
+      date: "2024-01-08",
+      description: "Target",
+      category: "shopping",
+      amount: 67.3,
+    },
+  ];
+
+  const totalSpent = parseFloat(overview.this_month_spending);
+  const totalIncome = parseFloat(overview.total_income);
+  const netBalance = parseFloat(overview.net_balance);
+  const avgDailySpend = (totalSpent / 30).toFixed(2);
+  const biggestCategory = spendingBreakdown[0];
 
   const CATEGORY_COLORS = {
-    'food': 'bg-orange-100 text-orange-600',
-    'transport': 'bg-purple-100 text-purple-600',
-    'entertainment': 'bg-pink-100 text-pink-600',
-    'utilities': 'bg-blue-100 text-blue-600',
-    'education': 'bg-green-100 text-green-600',
-    'health': 'bg-red-100 text-red-600',
-    'shopping': 'bg-yellow-100 text-yellow-600',
-    'other': 'bg-gray-100 text-gray-600',
+    food: "from-amber-500 to-orange-500",
+    transport: "from-green-500 to-emerald-500",
+    entertainment: "from-red-500 to-pink-500",
+    utilities: "from-blue-500 to-cyan-500",
+    education: "from-purple-500 to-indigo-500",
+    health: "from-rose-500 to-pink-500",
+    shopping: "from-yellow-500 to-amber-500",
+    other: "from-slate-500 to-gray-500",
   };
 
-  // Listen for currency changes
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setCurrency(getCurrency());
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  useEffect(() => {
-    const fetchReportData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const [overviewResult, breakdownResult, trendResult, transactionsResult] = await Promise.all([
-          reportsAPI.getOverview(),
-          reportsAPI.getSpendingBreakdown(),
-          reportsAPI.getSpendingTrend(),
-          reportsAPI.getRecentTransactions(10),
-        ]);
-
-        if (overviewResult.success) {
-          setOverview(overviewResult.data);
-        } else {
-          setError('Failed to load overview');
-        }
-
-        if (breakdownResult.success && Array.isArray(breakdownResult.data)) {
-          setSpendingBreakdown(breakdownResult.data);
-        }
-
-        if (trendResult.success && Array.isArray(trendResult.data)) {
-          setSpendingTrend(trendResult.data);
-        }
-
-        if (transactionsResult.success && Array.isArray(transactionsResult.data)) {
-          setRecentTransactions(transactionsResult.data);
-        }
-      } catch (err) {
-        console.error('Error fetching report data:', err);
-        setError('Error loading financial reports');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchReportData();
-  }, []);
-
-  if (loading) {
-    return (
-      <main className="flex-1 p-8 overflow-y-auto">
-        <div className="max-w-7xl mx-auto">
-          <p className="text-gray-600 dark:text-gray-300">Loading financial reports...</p>
-        </div>
-      </main>
-    );
-  }
-
-  const totalSpent = overview ? parseFloat(overview.this_month_spending) : 0;
-  const totalIncome = overview ? parseFloat(overview.total_income) : 0;
-  const netBalance = overview ? parseFloat(overview.net_balance) : 0;
-  const avgDailySpend = totalSpent > 0 ? (totalSpent / 30).toFixed(2) : 0;
-
-  // Find biggest expense category
-  const biggestCategory = spendingBreakdown.length > 0 
-    ? spendingBreakdown.reduce((max, cat) => 
-        parseFloat(cat.amount) > parseFloat(max.amount) ? cat : max
-      )
-    : null;
-
   return (
-    <main className="flex-1 p-8 overflow-y-auto">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Page Heading & Actions */}
-        <div className="flex flex-wrap justify-between items-start gap-4">
-          <div className="flex flex-col gap-2">
-            <p className="text-text-light-headings dark:text-white text-3xl font-bold">Financial Reports</p>
-            <p className="text-text-light-body dark:text-text-dark-body text-base">An overview of your spending patterns and financial health.</p>
-          </div>
-
-          <div className="flex gap-2 flex-wrap">
-            <button 
-              onClick={() => setPeriod('30days')}
-              className={`flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg px-3 ${
-                period === '30days'
-                  ? 'bg-primary text-white'
-                  : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-              }`}
-            >
-              <p className="text-sm font-medium">Last 30 Days</p>
-            </button>
-            
-          </div>
-        </div>
-
-        {error && (
-          <div className="bg-yellow-50 dark:bg-yellow-500/20 rounded-xl p-4 border border-yellow-200 dark:border-yellow-500/50">
-            <p className="text-yellow-700 dark:text-yellow-300">⚠️ {error}</p>
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="flex flex-col gap-2 rounded-lg p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-300">Total Spent</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalSpent, currency)}</p>
-            <p className="text-red-500 text-sm font-medium flex items-center gap-1">📊 This month</p>
-          </div>
-
-          <div className="flex flex-col gap-2 rounded-lg p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-300">Total Income</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalIncome, currency)}</p>
-            <p className="text-green-500 text-sm font-medium flex items-center gap-1">💰 All time</p>
-          </div>
-
-          <div className="flex flex-col gap-2 rounded-lg p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-300">Biggest Expense</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white truncate">
-              {biggestCategory ? CATEGORY_CHOICES[biggestCategory.category] || biggestCategory.category : 'N/A'}
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-300">
-              {formatCurrency(biggestCategory ? parseFloat(biggestCategory.amount) : 0, currency)}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 md:p-8 overflow-y-auto">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
+              Financial Reports
+            </h1>
+            <p className="text-slate-400">
+              Insights into your spending patterns and financial health
             </p>
           </div>
 
-          <div className="flex flex-col gap-2 rounded-lg p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-300">Avg. Daily Spend</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatCurrency(avgDailySpend, currency)}</p>
-            <p className="text-green-500 text-sm font-medium flex items-center gap-1">📉 Per day</p>
+          <button
+            onClick={() => setPeriod("30days")}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/50 w-fit"
+          >
+            Last 30 Days
+          </button>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {/* Total Spent */}
+          <div className="group relative p-6 rounded-xl bg-gradient-to-br from-slate-800/60 to-slate-800/30 border border-slate-700/50 backdrop-blur-xl hover:border-slate-600/50 transition-all duration-300 hover:-translate-y-1">
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-red-500/0 to-red-500/0 group-hover:from-red-500/5 group-hover:to-red-500/10 transition-all duration-300 pointer-events-none"></div>
+            <p className="text-slate-400 text-sm font-medium mb-2">
+              Total Spent
+            </p>
+            <p className="text-3xl font-black text-red-400 mb-1">
+              {formatCurrency(totalSpent)}
+            </p>
+            <p className="text-xs text-slate-500">This month</p>
+          </div>
+
+          {/* Total Income */}
+          <div className="group relative p-6 rounded-xl bg-gradient-to-br from-slate-800/60 to-slate-800/30 border border-slate-700/50 backdrop-blur-xl hover:border-slate-600/50 transition-all duration-300 hover:-translate-y-1">
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/5 group-hover:to-emerald-500/10 transition-all duration-300 pointer-events-none"></div>
+            <p className="text-slate-400 text-sm font-medium mb-2">
+              Total Income
+            </p>
+            <p className="text-3xl font-black text-emerald-400 mb-1">
+              {formatCurrency(totalIncome)}
+            </p>
+            <p className="text-xs text-slate-500">All time</p>
+          </div>
+
+          {/* Biggest Expense */}
+          <div className="group relative p-6 rounded-xl bg-gradient-to-br from-slate-800/60 to-slate-800/30 border border-slate-700/50 backdrop-blur-xl hover:border-slate-600/50 transition-all duration-300 hover:-translate-y-1">
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-purple-500/0 to-purple-500/0 group-hover:from-purple-500/5 group-hover:to-purple-500/10 transition-all duration-300 pointer-events-none"></div>
+            <p className="text-slate-400 text-sm font-medium mb-2">
+              Top Category
+            </p>
+            <p className="text-xl font-black text-purple-400 mb-1 truncate">
+              {CATEGORY_CHOICES[biggestCategory?.category]}
+            </p>
+            <p className="text-xs text-slate-500">
+              {formatCurrency(biggestCategory?.amount)}
+            </p>
+          </div>
+
+          {/* Avg Daily Spend */}
+          <div className="group relative p-6 rounded-xl bg-gradient-to-br from-slate-800/60 to-slate-800/30 border border-slate-700/50 backdrop-blur-xl hover:border-slate-600/50 transition-all duration-300 hover:-translate-y-1">
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/0 to-blue-500/0 group-hover:from-blue-500/5 group-hover:to-blue-500/10 transition-all duration-300 pointer-events-none"></div>
+            <p className="text-slate-400 text-sm font-medium mb-2">
+              Avg Daily Spend
+            </p>
+            <p className="text-3xl font-black text-blue-400 mb-1">
+              {formatCurrency(avgDailySpend)}
+            </p>
+            <p className="text-xs text-slate-500">Per day</p>
           </div>
         </div>
 
-        {/* Charts & Insights */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Spending Breakdown (Category Pie Chart) */}
-          <div className="flex flex-col gap-4 rounded-lg p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <p className="text-lg font-semibold text-gray-900 dark:text-white">Spending by Category</p>
-            <div className="space-y-3">
-              {spendingBreakdown.slice(0, 5).map((item) => {
-                const categoryName = CATEGORY_CHOICES[item.category] || item.category;
-                const colorClass = CATEGORY_COLORS[item.category] || 'bg-gray-100 text-gray-600';
-                return (
-                  <div key={item.category} className="space-y-1">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{categoryName}</span>
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">${parseFloat(item.amount).toFixed(2)}</span>
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          {/* Spending Breakdown */}
+          <div className="relative p-8 rounded-2xl bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-slate-700/50 backdrop-blur-xl overflow-hidden">
+            <div className="absolute -top-20 -left-20 w-40 h-40 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-700/50">
+                <PieChart className="w-5 h-5 text-purple-400" />
+                <h3 className="text-lg font-black text-white">
+                  Spending by Category
+                </h3>
+              </div>
+
+              <div className="space-y-4">
+                {spendingBreakdown.slice(0, 6).map((item, idx) => {
+                  const categoryName = CATEGORY_CHOICES[item.category];
+                  const gradientClass = CATEGORY_COLORS[item.category];
+                  return (
+                    <div key={item.category} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div
+                            className={`w-3 h-3 rounded-full bg-gradient-to-r ${gradientClass}`}
+                          ></div>
+                          <span className="text-sm font-medium text-slate-300">
+                            {categoryName}
+                          </span>
+                        </div>
+                        <span className="text-sm font-bold text-white">
+                          {item.percentage.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-slate-700/50 rounded-full overflow-hidden">
+                        <div
+                          className={`h-2 rounded-full bg-gradient-to-r ${gradientClass}`}
+                          style={{ width: `${item.percentage}%` }}
+                        ></div>
+                      </div>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div
-                        className="bg-blue-500 h-2 rounded-full"
-                        style={{ width: `${item.percentage}%` }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-end">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">{item.percentage.toFixed(1)}%</span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
 
           {/* Spending Trend */}
-          <div className="lg:col-span-2 flex flex-col gap-4 rounded-lg p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <p className="text-lg font-semibold text-gray-900 dark:text-white">Spending Over Time (Last 30 Days)</p>
-            <div className="flex min-h-[260px] items-end justify-around gap-2 px-2">
-              {spendingTrend.length > 0 ? (
-                spendingTrend.map((item, index) => {
-                  const maxAmount = Math.max(...spendingTrend.map(t => parseFloat(t.amount)));
-                  const height = (parseFloat(item.amount) / maxAmount) * 200;
-                  const date = new Date(item.date);
+          <div className="lg:col-span-2 relative p-8 rounded-2xl bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-slate-700/50 backdrop-blur-xl overflow-hidden">
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-700/50">
+                <TrendingUp className="w-5 h-5 text-blue-400" />
+                <h3 className="text-lg font-black text-white">
+                  Spending Trend (Last 30 Days)
+                </h3>
+              </div>
+
+              <div className="flex items-end justify-between gap-1 h-48 px-2">
+                {spendingTrend.map((item, index) => {
+                  const maxAmount = Math.max(
+                    ...spendingTrend.map((t) => parseFloat(t.amount))
+                  );
+                  const height = (parseFloat(item.amount) / maxAmount) * 100;
                   return (
-                    <div key={index} className="flex flex-col items-center gap-2 flex-1">
+                    <div key={index} className="flex-1 group relative">
                       <div
-                        className="w-full bg-blue-500 rounded-t"
-                        style={{ height: `${height}px`, minHeight: '4px' }}
-                        title={`$${parseFloat(item.amount).toFixed(2)}`}
+                        className="w-full bg-gradient-to-t from-blue-500 to-cyan-500 rounded-t-lg transition-all duration-300 group-hover:shadow-lg group-hover:shadow-blue-500/50 group-hover:from-blue-400 group-hover:to-cyan-400 cursor-pointer"
+                        style={{ height: `${Math.max(height, 5)}%` }}
+                        title={`Day ${index + 1}: ${formatCurrency(
+                          item.amount
+                        )}`}
                       ></div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{date.getDate()}</p>
                     </div>
                   );
-                })
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400">No spending data available</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* AI-Powered Insights */}
-        <div className="flex flex-col gap-4 rounded-lg p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Insights</h3>
-          <div className="flex flex-col gap-4">
-            {spendingBreakdown.length > 0 && (
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-blue-100 dark:bg-blue-500/20 rounded-full mt-1">📊</div>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Your biggest expense this month is <strong>{CATEGORY_CHOICES[biggestCategory?.category] || 'groceries'}</strong> at <strong>{formatCurrency(parseFloat(biggestCategory?.amount || 0), currency)}</strong> ({biggestCategory?.percentage.toFixed(1)}% of total).
-                </p>
+                })}
               </div>
-            )}
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-green-100 dark:bg-green-500/20 rounded-full mt-1">✅</div>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                You're tracking <strong>{spendingBreakdown.length} spending categories</strong> this month. Keep it up!
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-purple-100 dark:bg-purple-500/20 rounded-full mt-1">💡</div>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Your average daily spend is <strong>{formatCurrency(avgDailySpend, currency)}</strong>. This helps you stay on track with your budget.
+
+              <p className="text-xs text-slate-500 mt-4 text-center">
+                Hover over bars to see daily amounts
               </p>
             </div>
           </div>
         </div>
 
-        {/* Recent Transactions Table */}
-        <div className="rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Transactions</h3>
+        {/* Insights */}
+        <div className="relative p-8 rounded-2xl bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-slate-700/50 backdrop-blur-xl overflow-hidden mb-8">
+          <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div className="relative z-10">
+            <h3 className="text-lg font-black text-white mb-6 pb-4 border-b border-slate-700/50">
+              Key Insights
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Insight 1 */}
+              <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/30">
+                <div className="flex gap-3">
+                  <div className="text-2xl">📊</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-300">
+                      Your top spending is{" "}
+                      <span className="text-purple-300 font-semibold">
+                        {CATEGORY_CHOICES[biggestCategory?.category]}
+                      </span>{" "}
+                      at{" "}
+                      <span className="text-purple-300 font-semibold">
+                        {biggestCategory?.percentage.toFixed(1)}%
+                      </span>{" "}
+                      of total
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Insight 2 */}
+              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                <div className="flex gap-3">
+                  <div className="text-2xl">✅</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-300">
+                      You're tracking{" "}
+                      <span className="text-emerald-300 font-semibold">
+                        {spendingBreakdown.length} categories
+                      </span>{" "}
+                      this month. Great organization!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Insight 3 */}
+              <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/30">
+                <div className="flex gap-3">
+                  <div className="text-2xl">💡</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-300">
+                      Daily average of{" "}
+                      <span className="text-blue-300 font-semibold">
+                        {formatCurrency(avgDailySpend)}
+                      </span>{" "}
+                      keeps you on track with budget goals
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-900">
-                <tr>
-                  <th className="px-6 py-3">Date</th>
-                  <th className="px-6 py-3">Description</th>
-                  <th className="px-6 py-3">Category</th>
-                  <th className="px-6 py-3 text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentTransactions.length > 0 ? (
-                  recentTransactions.map((transaction) => {
-                    const categoryName = CATEGORY_CHOICES[transaction.category] || transaction.category;
-                    const colorClass = CATEGORY_COLORS[transaction.category] || 'bg-gray-100 text-gray-600';
+        </div>
+
+        {/* Recent Transactions */}
+        <div className="relative rounded-2xl bg-gradient-to-br from-slate-800/80 to-slate-800/40 border border-slate-700/50 backdrop-blur-xl overflow-hidden">
+          <div className="absolute -top-20 -left-20 w-40 h-40 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div className="relative z-10 p-8">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-700/50">
+              <BarChart3 className="w-5 h-5 text-cyan-400" />
+              <h3 className="text-lg font-black text-white">
+                Recent Transactions
+              </h3>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-700/50">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      Description
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      Category
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      Amount
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentTransactions.map((transaction) => {
+                    const categoryName = CATEGORY_CHOICES[transaction.category];
+                    const gradientClass = CATEGORY_COLORS[transaction.category];
                     return (
-                      <tr key={transaction.id} className="border-b border-gray-200 dark:border-gray-700">
-                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                          {new Date(transaction.date).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            year: 'numeric' 
-                          })}
+                      <tr
+                        key={transaction.id}
+                        className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors"
+                      >
+                        <td className="px-4 py-4 text-slate-300">
+                          {new Date(transaction.date).toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            }
+                          )}
                         </td>
-                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{transaction.description}</td>
-                        <td className="px-6 py-4">
-                          <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${colorClass}`}>
+                        <td className="px-4 py-4 font-medium text-white">
+                          {transaction.description}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r ${gradientClass} text-white`}
+                          >
                             {categoryName}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right font-semibold text-gray-900 dark:text-white">
-                          {formatCurrency(parseFloat(transaction.amount), currency)}
+                        <td className="px-4 py-4 text-right font-bold text-white">
+                          {formatCurrency(transaction.amount)}
                         </td>
                       </tr>
                     );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan="4" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                      No transactions found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

@@ -1,191 +1,219 @@
-import { useState, useMemo, useEffect } from 'react';
-import { transactionsAPI } from '../services/api';
-import { formatCurrency, getCurrency } from '../utils/currency';
+import { useState, useMemo, useEffect } from "react";
+import { transactionsAPI, budgetsAPI } from "../services/api";
+import { formatCurrency, getCurrency } from "../utils/currency";
 
 export default function Transactions() {
   const [currency, setCurrency] = useState(getCurrency());
-  const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('All Categories');
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("All Categories");
   const [transactions, setTransactions] = useState([]);
+  const [budgetCategories, setBudgetCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const CATEGORY_CHOICES = {
-    'food': 'Food & Groceries',
-    'transport': 'Transport',
-    'entertainment': 'Entertainment',
-    'utilities': 'Utilities',
-    'education': 'Education',
-    'health': 'Health & Medical',
-    'shopping': 'Shopping',
-    'other': 'Other',
+    food: "Food & Groceries",
+    transport: "Transport",
+    entertainment: "Entertainment",
+    utilities: "Utilities",
+    education: "Education",
+    health: "Health & Medical",
+    shopping: "Shopping",
+    salary: "Salary",
+    freelance: "Freelance",
+    scholarship: "Scholarship",
+    "part-time job": "Part-time Job",
+    internship: "Internship",
+    bonus: "Bonus",
+    investment: "Investment",
+    gift: "Gift",
+    allowance: "Allowance",
+    other: "Other",
   };
 
   const CATEGORY_ICONS = {
-    'food': '🍴',
-    'transport': '🚇',
-    'entertainment': '🎭',
-    'utilities': '⚡',
-    'education': '🎓',
-    'health': '⚕️',
-    'shopping': '🛍️',
-    'other': '📝',
+    food: "🍴",
+    transport: "🚇",
+    entertainment: "🎭",
+    utilities: "⚡",
+    education: "🎓",
+    health: "⚕️",
+    shopping: "🛍️",
+    other: "📝",
   };
 
-  // Mock data fallback
-  const defaultTransactions = [
-    { id: 1, date: '2024-11-17', description: 'Campus Cafeteria', category: 'food', amount: 8.50, type: 'expense' },
-    { id: 2, date: '2024-11-17', description: 'Cinema Plex', category: 'entertainment', amount: 15.00, type: 'expense' },
-    { id: 3, date: '2024-11-16', description: 'Metro Pass', category: 'transport', amount: 2.75, type: 'expense' },
-    { id: 4, date: '2024-11-16', description: 'Bookstore', category: 'shopping', amount: 42.30, type: 'expense' },
-    { id: 5, date: '2024-11-15', description: 'Grocery Store', category: 'food', amount: 35.20, type: 'expense' },
-    { id: 6, date: '2024-11-14', description: 'University Tuition', category: 'education', amount: 500.00, type: 'expense' },
+  const fallbackTransactions = [
+    { id: 1, date: "2024-11-17", description: "Campus Cafeteria", category: "food", amount: 8.5, type: "expense" },
+    { id: 2, date: "2024-11-17", description: "Cinema Plex", category: "entertainment", amount: 15, type: "expense" },
+    { id: 3, date: "2024-11-16", description: "Metro Pass", category: "transport", amount: 2.75, type: "expense" },
+    { id: 4, date: "2024-11-16", description: "Bookstore", category: "shopping", amount: 42.3, type: "expense" },
+    { id: 5, date: "2024-11-15", description: "Grocery Store", category: "food", amount: 35.2, type: "expense" },
+    { id: 6, date: "2024-11-14", description: "University Tuition", category: "education", amount: 500, type: "expense" },
   ];
 
   // Listen for currency changes
   useEffect(() => {
-    const handleStorageChange = () => {
-      setCurrency(getCurrency());
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    const refreshCurrency = () => setCurrency(getCurrency());
+    window.addEventListener("storage", refreshCurrency);
+    return () => window.removeEventListener("storage", refreshCurrency);
   }, []);
 
+  // Fetch budget + transactions
   useEffect(() => {
-    const fetchTransactions = async () => {
+    (async () => {
       try {
         setLoading(true);
-        const result = await transactionsAPI.getAll();
-        console.log('Transactions API result:', result);
-        
-        if (result.success && Array.isArray(result.data)) {
-          setTransactions(result.data);
+
+        const budgetRes = await budgetsAPI.getAll();
+        if (budgetRes.success && Array.isArray(budgetRes.data)) {
+          setBudgetCategories(budgetRes.data.map((b) => b.category));
+        }
+
+        const txRes = await transactionsAPI.getAll();
+        if (txRes.success && Array.isArray(txRes.data)) {
+          setTransactions(txRes.data);
           setError(null);
         } else {
-          setError('Failed to load transactions');
-          setTransactions(defaultTransactions);
+          setTransactions(fallbackTransactions);
+          setError("Failed to load transactions");
         }
-      } catch (err) {
-        console.error('Error fetching transactions:', err);
-        setError('Error loading transactions');
-        setTransactions(defaultTransactions);
+      } catch (e) {
+        setTransactions(fallbackTransactions);
+        setError("Error loading transactions");
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchTransactions();
+    })();
   }, []);
 
+  // Filter logic
   const filtered = useMemo(() => {
-    if (!Array.isArray(transactions)) {
-      return [];
-    }
-
     const q = query.trim().toLowerCase();
+
     return transactions.filter((t) => {
-      const transactionCategory = CATEGORY_CHOICES[t.category] || t.category || '';
-      
-      if (category !== 'All Categories' && transactionCategory !== category) return false;
+      const displayCat = CATEGORY_CHOICES[t.category] || t.category || "";
+
+      if (category !== "All Categories" && displayCat !== category) return false;
       if (!q) return true;
+
       return (
-        (t.description || '').toLowerCase().includes(q) ||
-        transactionCategory.toLowerCase().includes(q) ||
-        (t.date || '').toLowerCase().includes(q)
+        t.description?.toLowerCase().includes(q) ||
+        displayCat.toLowerCase().includes(q) ||
+        t.date?.toLowerCase().includes(q)
       );
     });
   }, [query, category, transactions]);
 
-  const categoryOptions = ['All Categories', ...Object.values(CATEGORY_CHOICES)];
+  // Build category dropdown 
+  const categoryOptions = useMemo(() => {
+    const options = ["All Categories"];
+    budgetCategories.forEach((c) => {
+      const name = CATEGORY_CHOICES[c] || c;
+      if (!options.includes(name)) options.push(name);
+    });
+    return options;
+  }, [budgetCategories]);
 
   return (
     <div className="p-8">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-black text-[#111827] dark:text-white mb-2">Transactions</h1>
-          <p className="text-[#6b7280] dark:text-[#92b2c9]">View all your recent transactions</p>
-        </div>
 
-        {/* Filters */}
+        {/* HEADER */}
+        <header className="mb-8">
+          <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-2">Transactions</h1>
+          <p className="text-gray-500 dark:text-gray-400">View all your recent transactions</p>
+        </header>
+
+        {/* FILTER */}
         <div className="flex gap-4 mb-6">
           <input
+            type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            type="text"
             placeholder="Search transactions..."
-            className="flex-1 px-4 py-2 rounded-lg bg-[#fdfdff] dark:bg-[#111b22] border border-gray-300 dark:border-gray-700 text-[#111827] dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-4 py-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 
+                       text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500"
           />
+
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="px-4 py-2 rounded-lg bg-[#fdfdff] dark:bg-[#111b22] border border-gray-300 dark:border-gray-700 text-[#111827] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 
+                       text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
           >
-            {categoryOptions.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
+            {categoryOptions.map((c) => (
+              <option key={c}>{c}</option>
             ))}
           </select>
         </div>
 
-        {/* Loading State */}
+        {/* LOADING */}
         {loading && (
-          <div className="bg-[#fdfdff] dark:bg-[#111b22] rounded-xl shadow-sm p-8 text-center">
-            <p className="text-[#6b7280] dark:text-[#92b2c9]">Loading transactions...</p>
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow p-8 text-center">
+            <p className="text-gray-500 dark:text-gray-400">Loading transactions...</p>
           </div>
         )}
 
-        {/* Error State */}
+        {/* ERROR */}
         {error && !loading && (
-          <div className="bg-yellow-50 dark:bg-yellow-500/20 rounded-xl shadow-sm p-4 mb-6 border border-yellow-200 dark:border-yellow-500/50">
-            <p className="text-yellow-700 dark:text-yellow-300">⚠️ {error}</p>
+          <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 
+                          rounded-xl p-4 mb-6">
+            <p className="text-yellow-700 dark:text-yellow-300 font-medium">⚠️ {error}</p>
           </div>
         )}
 
-        {/* Transactions List */}
+        {/* TABLE */}
         {!loading && (
-          <div className="bg-[#fdfdff] dark:bg-[#111b22] rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-[#0d1117]">
+                <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-[#111827] dark:text-white">Date</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-[#111827] dark:text-white">Description</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-[#111827] dark:text-white">Category</th>
-                    <th className="px-6 py-4 text-right text-sm font-semibold text-[#111827] dark:text-white">Amount</th>
+                    {["Date", "Description", "Category", "Amount"].map((h) => (
+                      <th
+                        key={h}
+                        className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
+
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {filtered.length > 0 ? (
-                    filtered.map((transaction) => {
-                      const catLabel = CATEGORY_CHOICES[transaction.category] || transaction.category;
-                      const catIcon = CATEGORY_ICONS[transaction.category] || '📝';
-                      
+                    filtered.map((t) => {
+                      const catName = CATEGORY_CHOICES[t.category] || t.category;
+                      const icon = CATEGORY_ICONS[t.category] || "📝";
+
                       return (
-                        <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-[#0d1117] transition">
-                          <td className="px-6 py-4 text-sm text-[#6b7280] dark:text-[#92b2c9]">{transaction.date}</td>
+                        <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                          <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{t.date}</td>
+
                           <td className="px-6 py-4 text-sm">
                             <div className="flex items-center gap-3">
-                              <span className="text-lg">{catIcon}</span>
-                              <span className="text-[#111827] dark:text-white font-medium">{transaction.description}</span>
+                              <span className="text-lg">{icon}</span>
+                              <span className="text-gray-900 dark:text-white font-medium">{t.description}</span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-sm text-[#6b7280] dark:text-[#92b2c9]">{catLabel}</td>
+
+                          <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{catName}</td>
+
                           <td className="px-6 py-4 text-sm text-right font-bold text-red-500">
-                            {formatCurrency(parseFloat(transaction.amount), currency)}
+                            {formatCurrency(Number(t.amount), currency)}
                           </td>
                         </tr>
                       );
                     })
                   ) : (
                     <tr>
-                      <td colSpan="4" className="px-6 py-8 text-center text-[#6b7280] dark:text-[#92b2c9]">
+                      <td colSpan="4" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                         No transactions found
                       </td>
                     </tr>
                   )}
                 </tbody>
+
               </table>
             </div>
           </div>
