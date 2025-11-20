@@ -85,6 +85,9 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
+    // Save token before clearing localStorage
+    const token = localStorage.getItem('auth_token');
+    
     setUser(null);
     setIsAuthenticated(false);
     localStorage.removeItem('user');
@@ -92,16 +95,19 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('auth_refresh');
     
     // Optional: Notify backend of logout
-    try {
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/auth/logout/`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-        credentials: import.meta.env.VITE_DJANGO_BACKEND === 'true' ? 'include' : 'omit',
-      });
-    } catch (err) {
-      console.error('Error notifying backend of logout:', err);
+    if (token) {
+      try {
+        await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/auth/logout/`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          credentials: import.meta.env.VITE_DJANGO_BACKEND === 'true' ? 'include' : 'omit',
+        });
+      } catch (err) {
+        console.error('Error notifying backend of logout:', err);
+      }
     }
     
     // Redirect to login after logout

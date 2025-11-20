@@ -75,7 +75,11 @@ export default function Register() {
         // Redirect to dashboard
         navigate("/", { replace: true });
       } else {
-        setError(response.error || "Registration failed. Please try again.");
+        const errorMsg = typeof response.error === 'string' 
+          ? response.error 
+          : JSON.stringify(response.error);
+        setError(errorMsg || "Registration failed. Please try again.");
+        console.error('Registration error details:', response.error);
       }
     } catch (err) {
       setError(err.message || "An error occurred during registration.");
