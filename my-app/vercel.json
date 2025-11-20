@@ -4,9 +4,11 @@
   "installCommand": "npm install",
   "framework": "vite",
   "outputDirectory": "dist",
-  "cleanUrls": true,
-  "trailingSlash": false,
   "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://foss-project-rose-sugar.onrender.com/api/$1"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
