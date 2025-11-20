@@ -51,13 +51,13 @@ export default function AddIncome() {
 
       if (result.success) {
         setSuccess(true);
-        // Reset form
+        // Reset-form
         setDescription('');
         setAmount('');
         setSource('Salary');
         setDate(new Date().toISOString().split('T')[0]);
         
-        // Redirect after 2 seconds
+        // Redirect after 2 secs
         setTimeout(() => {
           navigate('/');
         }, 2000);
