@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { Eye, EyeOff, AlertCircle, Loader, CheckCircle } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { authAPI } from "../services/api";
+import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
 
 export default function Register() {
   const [fullName, setFullName] = useState("");
@@ -11,10 +14,18 @@ export default function Register() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
+
+    // Validation
+    if (!fullName.trim()) {
+      setError("Please enter your full name.");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match!");
@@ -32,9 +43,46 @@ export default function Register() {
     }
 
     setLoading(true);
-    setTimeout(() => {
+
+    try {
+      // Split full name into first and last name
+      const nameParts = fullName.trim().split(" ");
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(" ");
+
+      const registerData = {
+        email,
+        password,
+        password_confirm: confirmPassword,
+        first_name: firstName,
+        last_name: lastName,
+      };
+
+      const response = await authAPI.register(registerData);
+
+      if (response.success) {
+        // Extract user data
+        const userData = {
+          email: response.data.user?.email || email,
+          id: response.data.user?.id,
+          first_name: response.data.user?.first_name,
+          last_name: response.data.user?.last_name,
+        };
+
+        // Store tokens and user data
+        login(userData, response.data.access, response.data.refresh);
+
+        // Redirect to dashboard
+        navigate("/", { replace: true });
+      } else {
+        setError(response.error || "Registration failed. Please try again.");
+      }
+    } catch (err) {
+      setError(err.message || "An error occurred during registration.");
+      console.error("Register error:", err);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const passwordStrength =
@@ -127,19 +175,8 @@ export default function Register() {
                   </div>
                 )}
 
-                  {/* Google Sign Up */}
-                  
-
-                  {/* Error Alert */}
-                  {error && (
-                    <div className="flex w-full items-center gap-3 rounded-lg bg-red-50 dark:bg-red-500/20 border border-red-200 dark:border-red-500/50 p-4 mb-4">
-                      <span className="text-red-600 dark:text-red-400 text-lg">⚠️</span>
-                      <p className="text-red-700 dark:text-red-300 text-sm font-medium">{error}</p>
-                    </div>
-                  )}
-
                 {/* Form */}
-                <div className="space-y-4">
+                <form onSubmit={handleRegister} className="space-y-4">
                   {/* Full Name */}
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-slate-200">
@@ -290,30 +327,30 @@ export default function Register() {
 
                   {/* Sign Up Button */}
                   <button
-                    onClick={handleRegister}
+                    type="submit"
                     disabled={loading}
                     className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6"
                   >
                     {loading ? (
                       <>
-                        <Loader className="w-5 h-5 animate-spin" />
+                        <span className="animate-spin">⏳</span>
                         <span>Creating Account...</span>
                       </>
                     ) : (
                       "Create My Free Account"
                     )}
                   </button>
-                </div>
+                </form>
 
                 {/* Login Link */}
                 <p className="mt-6 text-center text-sm text-slate-400">
                   Already have an account?{" "}
-                  <a
-                    href="/login"
+                  <Link
+                    to="/login"
                     className="font-bold text-blue-400 hover:text-blue-300 transition-colors"
                   >
                     Sign In
-                  </a>
+                  </Link>
                 </p>
               </div>
             </div>
