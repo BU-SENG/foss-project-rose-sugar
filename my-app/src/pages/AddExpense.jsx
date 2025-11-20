@@ -107,7 +107,7 @@ export default function AddExpense() {
   return (
     <main className="flex-1 p-8">
       <div className="mx-auto max-w-4xl">
-        {/* Page Heading */}
+        {/* Page-Heading */}
         <div className="mb-8">
           <div className="flex min-w-72 flex-col gap-2">
             <h1 className="text-4xl font-black leading-tight tracking-[-0.033em] text-gray-900 dark:text-white">
@@ -119,7 +119,7 @@ export default function AddExpense() {
           </div>
         </div>
 
-        {/* Error Message */}
+        {/* Error Messages */}
         {error && (
           <div className="mb-6 bg-red-50 dark:bg-red-500/20 rounded-xl p-4 border border-red-200 dark:border-red-500/50">
             <p className="text-red-700 dark:text-red-300">⚠️ {error}</p>
